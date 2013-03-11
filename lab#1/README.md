@@ -28,7 +28,7 @@
 
 ## The application creation steps
 
-Being the first laboratory work, the process of creating this software was more oriented toward my learning and understanding of basic parameters, functions and object interactions.
+Being the first laboratory work, the process of creating this software was more oriented toward learning and understanding of basic parameters, functions and object interactions, rather than to provide a stable purpose-oriented release.
 
 ### Basically the software provides the following functionality:
 * 1. Left Button (Activate) - Interacts with the Right Button "Enabling it", disables itself, changes the TEXT "Status:" to "Enabled", moves the window one pixel to the Left/Right.
