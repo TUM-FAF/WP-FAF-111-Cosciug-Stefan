@@ -14,6 +14,7 @@
 
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void Initialization(void);
+void Erease(int x, int y);
 
 #define WndWidth  640
 #define WndHeight 460
@@ -32,6 +33,7 @@ RECT WorkingAreaRect;
 RECT WorkingAreaTitleRect;
 RECT WorkingAreaInfoRect;
 POINT CurrentPos;                                                   // Used to pass the current cursor coordinates from 'WM_MOUSEMOVE' to 'WM_PAINT'
+//POINT EreaserCoord                                                  // Keeps the coordinates of the first point
 POINT BezCurveBI[4];                                                // Keeps the coordinates required to draw a Bezier curve. Reserved for the built-in Bezier curve
 POINT BezCurveCoord[20][4];                                         // Keeps the coordinates required to draw a Bezier curve
 POINT RectCoord[20][2];                                             // Keeps the coordinates required to draw a rectangle
@@ -41,7 +43,7 @@ int NrBezCurves;
 int NrEllipses;
 int DrawStartupObjects = 1;                                         // {1 - yes; 0 - no}
 int MouseAbility = 0;                                               // {0 - Use mouse clicks to draw figures; 1 - use drag and drop method to draw figures}
-int DrawFigure = 0;                                                 // {1 - Draw a rectangle; 2 - Draw an ellipse; 3 - Draw a bezier curve}
+int DrawFigure = 0;                                                 // {1 - Draw a rectangle; 2 - Draw an ellipse; 3 - Draw a bezier curve; 9 - Ereaser}
 int ClicksCounter = 0;                                              // Based on the number of clicks, the program determines what figure needs to be drawn
 
 
@@ -223,6 +225,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     NrBezCurves = 0;
                     InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
                     InvalidateRect(hwnd, &WorkingAreaInfoRect, TRUE);
+
+                    // Printing the "Clear Screen" event in the console
+                    printf ("Clear Screen \n");
                 }
                 break;
 
@@ -256,18 +261,21 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 case IDC_Rectangle:
                 {
                     DrawFigure = 1;
+                    InvalidateRect(hwnd, &WorkingAreaInfoRect, TRUE);
                 }
                 break;
 
                 case IDC_Ellipse:
                 {
                     DrawFigure = 2;
+                    InvalidateRect(hwnd, &WorkingAreaInfoRect, TRUE);
                 }
                 break;
 
                 case IDC_Bezier:
                 {
                     DrawFigure = 3;
+                    InvalidateRect(hwnd, &WorkingAreaInfoRect, TRUE);
                 }
                 break;
             }
@@ -297,8 +305,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         RectCoord[NrRectangles][ClicksCounter].x = xPos;
                         RectCoord[NrRectangles][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        printf("%d\n", NrRectangles);
-                        printf("%d\n", ClicksCounter);
+
+                        // Writing some information in the console
+                        if (ClicksCounter == 1)
+                        {
+                            printf("Nr of constructed rectangles: %d \n", NrRectangles);
+                        }
+                        printf("Clicks counter: %d \n", ClicksCounter);
                     }
                     if (ClicksCounter == 2)
                     {
@@ -314,8 +327,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         EllipseCoord[NrEllipses][ClicksCounter].x = xPos;
                         EllipseCoord[NrEllipses][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        printf("%d\n", NrEllipses);
-                        printf("%d\n", ClicksCounter);
+
+                        // Writing some information in the console
+                        if (ClicksCounter == 1)
+                        {
+                            printf("Nr of constructed ellipses: %d \n", NrEllipses);
+                        }
+                        printf("Clicks counter: %d \n", ClicksCounter);
                     }
                     if (ClicksCounter == 2)
                     {
@@ -331,8 +349,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         BezCurveCoord[NrBezCurves][ClicksCounter].x = xPos;
                         BezCurveCoord[NrBezCurves][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        printf("%d\n", NrBezCurves);
-                        printf("%d\n", ClicksCounter);
+
+                        // Writing some information in the console
+                        if (ClicksCounter == 1)
+                        {
+                            printf("Nr of constructed Bezier curves: %d \n", NrBezCurves);
+                        }
+                        printf("Clicks counter: %d \n", ClicksCounter);
                     }
                     if (ClicksCounter == 4)
                     {
@@ -340,6 +363,35 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                 }
                 break;
+            }
+        }
+        break;
+
+        // Right mouse button press event
+        case WM_RBUTTONDOWN:
+        {
+            // General declarations
+            int xPos = LOWORD(lParam);  // Horizontal position of cursor
+            int yPos = HIWORD(lParam);  // Vertical position of cursor
+
+            // Checking if cursor position isn't beyond the working area bounds
+            if (xPos < 0 || xPos > 420 || yPos < 20 || yPos > 400)
+            {
+                break;
+            }
+
+            // Isolating "Cancel" event from the "Erease" event
+            if (DrawFigure == 0 && ClicksCounter == 0)
+            {
+                Erease(xPos, yPos);
+                InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+            }
+            else
+            {
+                // Cancel feature
+                DrawFigure = 0;
+                ClicksCounter = 0;
+                RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
             }
         }
         break;
@@ -388,6 +440,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     break;
                 }
+
+                // Printing the mouse left button release event for the "Drag and Drop" method in the console
+                printf("Clicks counter: %d \n", ClicksCounter);
             }
 
             // Specific case meant for Bezier curve drawing. Separated because of 'ClicksCounter', in order to avoid errors by making the condition available to other cases
@@ -401,6 +456,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         BezCurveCoord[NrBezCurves][ClicksCounter].y = yPos;
                         ClicksCounter++;
                         InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+
+                        // Printing the mouse left button release event for the "Drag and Drop" method in the console
+                        printf("Clicks counter: %d \n", ClicksCounter);
                     }
                     break;
                 }
@@ -466,6 +524,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                         case 1:
                         {
+                            // Writing some information below the working area
+                            DrawText(hdc, "Info: Rectangle figure selected. Mouse ability is set to *Click*." , lstrlen("Info: Rectangle figure selected. Mouse ability is set to *Click*."), &WorkingAreaInfoRect, DT_LEFT);
+
                             if (ClicksCounter == 1)
                             {
                                 Rectangle(hdc, RectCoord[NrRectangles][0].x, RectCoord[NrRectangles][0].y, CurrentPos.x, CurrentPos.y);
@@ -475,12 +536,18 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                 NrRectangles++;
                                 ClicksCounter = 0;
                                 DrawFigure = 0;
+
+                                // Redrawing the 'WorkingAreaInfoRect' rectangle
+                                RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
                             }
                         }
                         break;
 
                         case 2:
                         {
+                            // Writing some information below the working area
+                            DrawText(hdc, "Info: Ellipse figure selected. Mouse ability is set to *Click*." , lstrlen("Info: Ellipse figure selected. Mouse ability is set to *Click*."), &WorkingAreaInfoRect, DT_LEFT);
+
                             if (ClicksCounter == 1)
                             {
                                 Arc(hdc, EllipseCoord[NrEllipses][0].x, EllipseCoord[NrEllipses][0].y, CurrentPos.x, CurrentPos.y, 0, 0, 0, 0);
@@ -490,12 +557,18 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                 NrEllipses++;
                                 ClicksCounter = 0;
                                 DrawFigure = 0;
+
+                                // Redrawing the 'WorkingAreaInfoRect' rectangle
+                                RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
                             }
                         }
                         break;
 
                         case 3:
                         {
+                            // Writing some information below the working area
+                            DrawText(hdc, "Info: Bezier curve selected. Mouse ability is set to *Click*." , lstrlen("Info: Bezier curve selected. Mouse ability is set to *Click*."), &WorkingAreaInfoRect, DT_LEFT);
+
                             POINT* LocBezCurve = new POINT[4];
                             switch(ClicksCounter)
                             {
@@ -505,6 +578,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[0].y = BezCurveCoord[NrBezCurves][0].y;
                                     LocBezCurve[3].x = CurrentPos.x;
                                     LocBezCurve[3].y = CurrentPos.y;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -516,6 +591,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[3].y = BezCurveCoord[NrBezCurves][1].y;
                                     LocBezCurve[1].x = CurrentPos.x;
                                     LocBezCurve[1].y = CurrentPos.y;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -529,6 +606,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[1].y = BezCurveCoord[NrBezCurves][2].y;
                                     LocBezCurve[2].x = CurrentPos.x;
                                     LocBezCurve[2].y = CurrentPos.y;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -554,10 +633,14 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     NrBezCurves++;
                                     ClicksCounter = 0;
                                     DrawFigure = 0;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
+
+                                    // Redrawing the 'WorkingAreaInfoRect' rectangle
+                                    RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
                                 }
                                 break;
                             }
-                            PolyBezier(hdc, LocBezCurve, 4);
                             delete [] LocBezCurve;
                         }
                         break;
@@ -578,6 +661,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                         case 1:
                         {
+                            // Writing some information below the working area
+                            DrawText(hdc, "Info: Rectangle figure selected. Mouse ability is set to *D and D*." , lstrlen("Info: Rectangle figure selected. Mouse ability is set to *D and D*."), &WorkingAreaInfoRect, DT_LEFT);
+
                             if (ClicksCounter == 1)
                             {
                                 Rectangle(hdc, RectCoord[NrRectangles][0].x, RectCoord[NrRectangles][0].y, CurrentPos.x, CurrentPos.y);
@@ -585,15 +671,20 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             else if (ClicksCounter == 2)
                             {
                                 NrRectangles++;
-
                                 ClicksCounter = 0;
                                 DrawFigure = 0;
+
+                                // Redrawing the 'WorkingAreaInfoRect' rectangle
+                                RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
                             }
                         }
                         break;
 
                         case 2:
                         {
+                            // Writing some information below the working area
+                            DrawText(hdc, "Info: Ellipse figure selected. Mouse ability is set to *D and D*." , lstrlen("Info: Ellipse figure selected. Mouse ability is set to *D and D*."), &WorkingAreaInfoRect, DT_LEFT);
+
                             if (ClicksCounter == 1)
                             {
                                 Arc(hdc, EllipseCoord[NrEllipses][0].x, EllipseCoord[NrEllipses][0].y, CurrentPos.x, CurrentPos.y, 0, 0, 0, 0);
@@ -601,15 +692,20 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             else if (ClicksCounter == 2)
                             {
                                 NrEllipses++;
-
                                 ClicksCounter = 0;
                                 DrawFigure = 0;
+
+                                // Redrawing the 'WorkingAreaInfoRect' rectangle
+                                RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
                             }
                         }
                         break;
 
                         case 3:
                         {
+                            // Writing some information below the working area
+                            DrawText(hdc, "Info: Bezier curve selected. Mouse ability is set to *D and D*." , lstrlen("Info: Bezier curve selected. Mouse ability is set to *D and D*."), &WorkingAreaInfoRect, DT_LEFT);
+
                             POINT* LocBezCurve = new POINT[4];
                             switch(ClicksCounter)
                             {
@@ -619,6 +715,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[0].y = BezCurveCoord[NrBezCurves][0].y;
                                     LocBezCurve[3].x = CurrentPos.x;
                                     LocBezCurve[3].y = CurrentPos.y;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -630,6 +728,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[3].y = BezCurveCoord[NrBezCurves][1].y;
                                     LocBezCurve[1].x = CurrentPos.x;
                                     LocBezCurve[1].y = CurrentPos.y;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -643,6 +743,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[1].y = BezCurveCoord[NrBezCurves][2].y;
                                     LocBezCurve[2].x = CurrentPos.x;
                                     LocBezCurve[2].y = CurrentPos.y;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -668,10 +770,14 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     NrBezCurves++;
                                     ClicksCounter = 0;
                                     DrawFigure = 0;
+
+                                    PolyBezier(hdc, LocBezCurve, 4);
+
+                                    // Redrawing the 'WorkingAreaInfoRect' rectangle
+                                    RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
                                 }
                                 break;
                             }
-                            PolyBezier(hdc, LocBezCurve, 4);
                             delete [] LocBezCurve;
                         }
                         break;
@@ -775,6 +881,22 @@ return 0;
 // Performs program entry point operations
 void Initialization(void)
 {
+    // Printing program description in the console
+    printf("***************************************************\n");
+    printf("Title:    Laboratory Work #3                 ******\n");
+    printf("                                             ******\n");
+    printf("Functions:                                   ******\n");
+    printf("          RClick:        Cancel/Delete       ******\n");
+    printf("          Mouse Drawing: Clicks/Drag and Drop******\n");
+    printf("                                             ******\n");
+    printf("Figures:  Rectangle, Ellipse, Bezier curve   ******\n");
+    printf("***************************************************\n");
+    printf("\n\n");
+    printf("***************************************************\n");
+    printf("******                 Log:                  ******\n");
+    printf("***************************************************\n");
+    printf("\n");
+
     // Setting the working area title rectangle coordinates
     WorkingAreaTitleRect.left = 0;
     WorkingAreaTitleRect.top = 0;
@@ -793,4 +915,92 @@ void Initialization(void)
     WorkingAreaInfoRect.right = 420;
     WorkingAreaInfoRect.bottom = 420;
 }
+
+
+void Erease(int x, int y)
+{
+    int i;
+    int R[20];
+    int E[20];
+    int B[20];
+
+    R[0] = 0;
+    E[0] = 0;
+    B[0] = 0;
+
+    // Storing the index of the object if the coordinates match
+    for (i=0; i<NrRectangles; i++)
+    {
+        if ((RectCoord[i][0].x < x && RectCoord[i][1].x > x) || (RectCoord[i][0].x > x && RectCoord[i][1].x < x))
+        {
+            if ((RectCoord[i][0].y < y && RectCoord[i][1].y > y) || (RectCoord[i][0].y > y && RectCoord[i][1].y < y))
+            {
+                R[i] = 1;
+                printf("The rectangle #%d, with coordinates (%d,%d),(%d,%d) was deleted \n", i,RectCoord[i][0].x,RectCoord[i][0].y,RectCoord[i][1].x,RectCoord[i][1].y);
+            }
+
+        }
+    }
+    for (i=0; i<NrEllipses; i++)
+    {
+        if ((EllipseCoord[i][0].x < x && EllipseCoord[i][1].x > x) || (EllipseCoord[i][0].x > x && EllipseCoord[i][1].x < x))
+        {
+            if ((EllipseCoord[i][0].y < y && EllipseCoord[i][1].y > y) || (EllipseCoord[i][0].y > y && EllipseCoord[i][1].y < y))
+            {
+                E[i] = 1;
+                printf("The ellipse #%d, with coordinates (%d,%d),(%d,%d) was deleted \n", i,EllipseCoord[i][0].x,EllipseCoord[i][0].y,EllipseCoord[i][1].x,EllipseCoord[i][1].y);
+            }
+
+        }
+    }
+    for (i=0; i<NrBezCurves; i++)
+    {
+        if ((BezCurveCoord[i][0].x < x && BezCurveCoord[i][3].x > x) || (BezCurveCoord[i][0].x > x && BezCurveCoord[i][3].x < x) || (BezCurveCoord[i][0].x == x && BezCurveCoord[i][3].x == x))
+        {
+            if ((BezCurveCoord[i][0].y < y && BezCurveCoord[i][3].y > y) || (BezCurveCoord[i][0].y > y && BezCurveCoord[i][3].y < y) || (BezCurveCoord[i][0].y == y && BezCurveCoord[i][3].y == y))
+            {
+                B[i] = 1;
+                printf("The Bezier curve #%d, with position coordinates (%d,%d),(%d,%d) was deleted \n", i,BezCurveCoord[i][0].x,BezCurveCoord[i][0].y,BezCurveCoord[i][3].x,BezCurveCoord[i][3].y);
+            }
+
+        }
+    }
+
+    // Removing the objects from the array
+    for (i=0; i<NrRectangles; i++)
+    {
+        if (R[i] == 1)
+        {
+            RectCoord[i][0].x = 0;
+            RectCoord[i][0].y = 0;
+            RectCoord[i][1].x = 0;
+            RectCoord[i][1].y = 0;
+        }
+    }
+    for (i=0; i<NrEllipses; i++)
+    {
+        if (E[i] == 1)
+        {
+            EllipseCoord[i][0].x = 0;
+            EllipseCoord[i][0].y = 0;
+            EllipseCoord[i][1].x = 0;
+            EllipseCoord[i][1].y = 0;
+        }
+    }
+    for (i=0; i<NrBezCurves; i++)
+    {
+        if (B[i] == 1)
+        {
+            BezCurveCoord[i][0].x = 0;
+            BezCurveCoord[i][0].y = 0;
+            BezCurveCoord[i][1].x = 0;
+            BezCurveCoord[i][1].y = 0;
+            BezCurveCoord[i][2].x = 0;
+            BezCurveCoord[i][2].y = 0;
+            BezCurveCoord[i][3].x = 0;
+            BezCurveCoord[i][3].y = 0;
+        }
+    }
+}
+
 
