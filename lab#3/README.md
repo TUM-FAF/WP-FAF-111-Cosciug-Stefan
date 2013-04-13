@@ -35,6 +35,6 @@
 * 4. In order to zoom in - press the ENTER key once, then with the arrow keys select the figure you want to zoom in and press ENTER. To zoom out - press the ENTER key.
 
 
-![Result](https://raw.github.com/TUM-FAF/WP-FAF-111-Cosciug-Stefan/master/lab%332/img1.png)
-![Result](https://raw.github.com/TUM-FAF/WP-FAF-111-Cosciug-Stefan/master/lab%332/img2.png)
+![Result](https://raw.github.com/TUM-FAF/WP-FAF-111-Cosciug-Stefan/master/lab%32/img1.png)
+![Result](https://raw.github.com/TUM-FAF/WP-FAF-111-Cosciug-Stefan/master/lab%32/img2.png)
 
