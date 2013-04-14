@@ -5,5 +5,5 @@
 
 ## Line spacing
 * 5 lines - Separates the main parts of a program (global declarations & function prototypes, main function, other functions).
-* 2 lines - Separates a main block title comment from the code.
-* 1 line - Regular separator. Delimits "cases" in 'switch' function and blocks of code with different purpose.
+* 2 lines - Between functions.
+* 1 line - Delimits "cases" in 'switch' function and blocks of code with different purpose.
