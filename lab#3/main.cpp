@@ -50,10 +50,7 @@ int DrawFigure = 0;                                                 // {1 - Draw
 int ClicksCounter = 0;                                              // Based on the number of clicks, the program determines what figure needs to be drawn
 int ZoomFlag;                                                       // {0 - initial state; 1 - figure selection state; 2 - zoomed state}
 int ZoomIndex;                                                      // Index value of the currently selected figure. Ranges from 0 -> NrRectangles+NrEllipses+NrBezCurves
-// Double Buffering
-HBITMAP moldbmp;
-HBITMAP mbmp;
-HDC mdc;
+
 
 
 
