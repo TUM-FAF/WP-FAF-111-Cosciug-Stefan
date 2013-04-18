@@ -1,7 +1,7 @@
 # Windows Programming
 ###### student gr. FAF-111: Cosciug Stefan
 
-# Topic: Basics of Working with Mouse. GDI Primitives. Bezier Curve.
+# Topic: Windows Timer. Animation.
 ## Intro
 ### Purpose
 * Event-driven programming (message-oriented)
