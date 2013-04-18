@@ -201,10 +201,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                                 if (j!=i)
                                 {
-                                    //if ((fabs(CenterLocX-CenterRemX)<(B[i].Diameter+B[j].Diameter)/2.0) && (fabs(CenterLocY-CenterRemY)<(B[i].Diameter+B[j].Diameter)/2.0))
-                                    if (sqrt((abs(CenterLocX-CenterRemX)*abs(CenterLocX-CenterRemX))+(abs(CenterLocY-CenterRemY)*abs(CenterLocY-CenterRemY)))<((B[i].Diameter+B[j].Diameter)/2.0))
+                                    if (sqrt((abs(CenterLocX-CenterRemX)*abs(CenterLocX-CenterRemX))+
+                                             (abs(CenterLocY-CenterRemY)*abs(CenterLocY-CenterRemY)))<((B[i].Diameter+B[j].Diameter)/2.0))
                                     {
-
                                         B[i].Color.Red = rand() % 255;
                                         B[i].Color.Green = rand() % 255;
                                         B[i].Color.Blue = rand() % 255;
@@ -265,7 +264,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             float yPos = HIWORD(lParam);        // Vertical position of cursor
 
             // Checking if cursor position isn't beyond the working area bounds
-            if (xPos < WorkingAreaRect.left || xPos > WorkingAreaRect.right || yPos < WorkingAreaRect.top || yPos > WorkingAreaRect.bottom) {break;}
+            if (xPos < WorkingAreaRect.left || xPos > WorkingAreaRect.right || yPos < WorkingAreaRect.top ||
+                yPos > WorkingAreaRect.bottom) {break;}
 
             // Reloading objects array to prevent overflow
             if (NrRings == 20)
@@ -321,7 +321,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (ClicksCounter == 1)
             {
                 // Calculating and storing diameter of the Ring and the endpoint
-                if (max(xPos-B[NrRings].Coord.left, yPos-B[NrRings].Coord.top)>30.0 && max(xPos-B[NrRings].Coord.left, yPos-B[NrRings].Coord.top)<200.0)
+                if (max(xPos-B[NrRings].Coord.left, yPos-B[NrRings].Coord.top)>30.0
+                    && max(xPos-B[NrRings].Coord.left, yPos-B[NrRings].Coord.top)<200.0)
                 {
                     // Storing the diameter of the Ring
                     B[NrRings].Diameter = max(xPos-B[NrRings].Coord.left, yPos-B[NrRings].Coord.top);
@@ -346,7 +347,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Block of code responsible for real-time view of the figure during it's drawing
             if (ClicksCounter == 1)
             {
-                Arc(hdcMem, B[NrRings].Coord.left, B[NrRings].Coord.top, B[NrRings].Coord.left+B[NrRings].Diameter, B[NrRings].Coord.top+B[NrRings].Diameter, 0, 0, 0, 0);
+                Arc(hdcMem, B[NrRings].Coord.left, B[NrRings].Coord.top, B[NrRings].Coord.left+B[NrRings].Diameter,
+                    B[NrRings].Coord.top+B[NrRings].Diameter, 0, 0, 0, 0);
             }
             else if (ClicksCounter == 2)
             {
