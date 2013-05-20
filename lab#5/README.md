@@ -1,5 +1,5 @@
 # Windows Programming
-###### student gr. FAF-111: Cosciug Stefan
+###### student gr. FAF-111: Cosciug Stefan/Mardari Vasile
 
 # Topic: Collaboration. Complex application
 ## Intro
