@@ -301,7 +301,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     B[NrRings].Diameter = B[NrRings].Coord.bottom-B[NrRings].Coord.top;
                 }
 
-
                 // Setting a random direction (angle)
                 B[NrRings].Direction = (rand() % 358)+2;
                 ClicksCounter++;
