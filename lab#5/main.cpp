@@ -984,7 +984,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                 B[i].UpdateSpeed();
                                 printf ("Space \n");
                             }
-
                         }
                     }
                 }
