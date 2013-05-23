@@ -24,6 +24,10 @@ void Initialization(void);
 #define WndWidth  1024
 #define WndHeight 768
 #define IDT_TIMER1 10
+#define MENU_NEWGAME 101
+#define MENU_RANDOM 102
+#define MENU_EXIT 103
+
 HWND hwndMain;
 HDC hdc;
 PAINTSTRUCT ps;
@@ -46,8 +50,6 @@ static HDC hdcMem;
 
 
 
-double InterX;
-double InterY;
 
 
 /*///////////////////////
@@ -93,6 +95,15 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, int nCmdSh
     // Make the window visible
     ShowWindow(hwndMain,SW_SHOW);
 
+    // Creating the menu
+    HMENU hMenu = CreateMenu();
+    HMENU hFileMenu = CreatePopupMenu();
+    AppendMenu(hFileMenu, MF_STRING, MENU_NEWGAME, "New Game");
+    AppendMenu(hFileMenu, MF_STRING, MENU_RANDOM, "Random");
+    AppendMenu(hFileMenu, MF_STRING, MENU_EXIT, "Exit");
+    AppendMenu(hMenu, MF_STRING|MF_POPUP, (UINT)hFileMenu, "Game");
+    SetMenu(hwndMain, hMenu);
+
     // Performing program entry point operations
     Initialization();
 
@@ -121,6 +132,61 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         case WM_DESTROY:
             PostQuitMessage(0);
+        break;
+
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case MENU_EXIT:
+                    PostQuitMessage(0);
+                break;
+
+                case MENU_NEWGAME:
+                {
+                    // Reloading objects array
+                    delete [] B;
+                    Ball* B = new Ball[20];
+                    NrBalls = 0;
+                    // Reseting recorded data
+                    RightMost = 0;
+                    PlayerScore[0] = 0; PlayerScore[1] = 0;
+                    // Refreshing the screen
+                    InvalidateRect(hwnd, &ScoreboardRect, FALSE);
+                }
+                break;
+
+                case MENU_RANDOM:
+                {
+                    // Reloading objects array
+                    delete [] B;
+                    Ball* B = new Ball[20];
+                    NrBalls = 0;
+                    // Reseting recorded data
+                    RightMost = 0;
+                    PlayerScore[0] = 0; PlayerScore[1] = 0;
+                    // Generating a random number
+                    time_t t;
+                    srand((unsigned) time(&t));
+                    // Setting random data
+                    NrBalls = 1+rand()%12;
+                    for (int i=0; i<NrBalls; i++)
+                    {
+                        B[i].Diameter = 30.0+rand()%160;
+                        double xPos = (B[i].Diameter+36.0)+rand()%530;
+                        double yPos = (B[i].Diameter+41.0)+rand()%280;
+                        B[i].Coord.left = xPos;
+                        B[i].Coord.right = xPos+B[i].Diameter;
+                        B[i].Coord.top = yPos;
+                        B[i].Coord.bottom = yPos+B[i].Diameter;
+                        // Setting a random direction (angle)
+                        B[i].SetDirection((rand() % 358)+2);
+                        printf("Impulse for ball %d is: (%f,%f) \n", NrBalls, B[NrBalls].Impulse.x, B[NrBalls].Impulse.y);
+                    }
+                    // Refreshing the screen
+                    InvalidateRect(hwnd, &ScoreboardRect, FALSE);
+                }
+                break;
+            }
         break;
 
         // Main objects initialization
@@ -663,8 +729,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                             B[j].Coord.top = B[j].Coord.top + offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
                                             B[j].Coord.bottom = B[j].Coord.bottom + offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
 
-                                            InterX = CenterLocX+(dx);   // Intersection coordinates along the x-axys
-                                            InterY = CenterLocY+(dy);   // Intersection coordinates along the y-axys
+                                            //InterX = CenterLocX+(dx);   // Intersection coordinates along the x-axys
+                                            //InterY = CenterLocY+(dy);   // Intersection coordinates along the y-axys
                                             TanLnAngle = 90.0 - angle*180.0/3.14;  // Angle of the tangent line at the intersection point
                                             NormalAngle = TanLnAngle + 90.0;    // Angle of the normal vector
                                             if (NormalAngle > 360.0) {NormalAngle -= 360.0;}
@@ -686,8 +752,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                             B[j].Coord.top = B[j].Coord.top - offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
                                             B[j].Coord.bottom = B[j].Coord.bottom - offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
 
-                                            InterX = CenterLocX+(dx);
-                                            InterY = CenterLocY-(dy);
+                                            //InterX = CenterLocX+(dx);
+                                            //InterY = CenterLocY-(dy);
                                             TanLnAngle = 270.0 + angle*180.0/3.14;
                                             NormalAngle = TanLnAngle + 90.0;
                                             if (NormalAngle > 360.0) {NormalAngle -= 360.0;}
@@ -709,8 +775,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                             B[j].Coord.top = B[j].Coord.top + offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
                                             B[j].Coord.bottom = B[j].Coord.bottom + offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
 
-                                            InterX = CenterLocX-(dx);
-                                            InterY = CenterLocY+(dy);
+                                            //InterX = CenterLocX-(dx);
+                                            //InterY = CenterLocY+(dy);
                                             TanLnAngle = 270.0 + angle*180.0/3.14;
                                             NormalAngle = TanLnAngle + 90.0;
                                             if (NormalAngle > 360.0) {NormalAngle -= 360.0;}
@@ -732,8 +798,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                             B[j].Coord.top = B[j].Coord.top - offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
                                             B[j].Coord.bottom = B[j].Coord.bottom - offsetY*(B[j].Diameter/2.0)/((B[i].Diameter+B[j].Diameter)/2.0);
 
-                                            InterX = CenterLocX-(dx);
-                                            InterY = CenterLocY-(dy);
+                                            //InterX = CenterLocX-(dx);
+                                            //InterY = CenterLocY-(dy);
                                             TanLnAngle = 90.0 - angle*180.0/3.14;
                                             NormalAngle = TanLnAngle + 90.0;
                                             if (NormalAngle > 360.0) {NormalAngle -= 360.0;}
@@ -1107,7 +1173,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 B[NrBalls].Diameter = 60.0;
                 // Defining the initial direction
                 B[NrBalls].SetDirection((rand() % 358)+2);
-                //B[NrBalls].SpeedM = 6.0;
                 printf("Impulse for ball %d is: (%f,%f) \n", NrBalls, B[NrBalls].Impulse.x, B[NrBalls].Impulse.y);
                 // Defining the initial position
                 B[NrBalls].Coord.left = ((WorkingAreaRect.right-WorkingAreaRect.left)/2.0)-30.0;
@@ -1121,7 +1186,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Block of code responsible for real-time view of the figure during its drawing
             if (ClicksCounter == 1)
             {
-                //SelectObject(hdcMem, WhitePen);   // Not needed as long as this pen is selected during docks creation
                 SelectObject(hdcMem, WhiteBrush);
                 Ellipse(hdcMem, B[NrBalls].Coord.left, B[NrBalls].Coord.top, B[NrBalls].Coord.left+B[NrBalls].Diameter, B[NrBalls].Coord.top+B[NrBalls].Diameter);
             }
