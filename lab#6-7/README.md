@@ -25,13 +25,13 @@ This application is a multiple choice questionnaire providing computer-related q
 The test page features 3 levels of complexity and a set of 10 questions for each level. Output is provided in terms of text and colour. 
 After starting the timer it will run continuously having allocated 60 seconds / question, unless a pause is requested.
 Pause is set only after having completed the current question. There are 2 possible outcomes:
-* "The user requested a pause and made a choice" - The choice wil be recorded and the timer will halt.
-* "The user requested a pause and didn't choose anyhing" - The answer to the current question will be marked as "wrong" and the timer will halt.
+* "The user requested a pause and made a choice" - The choice will be recorded and the timer will halt.
+* "The user requested a pause and didn't choose anything" - The answer to the current question will be marked as "wrong" and the timer will halt.
 
 The test page also features an array of 10 buttons linked to 10 questions. They become available as questions are being answered and navigation between them is allowed at any time.
 
 
-This application follow the WinRT life cycle, which allows the application to suspend. Suspending the application while the timer is active will mark the answer to the current question as "wrong".
+This application follows the WinRT life cycle, which allows the application to suspend. Suspending the application while the timer is active will mark the answer to the current question as "wrong".
  
 
 
