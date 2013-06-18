@@ -51,6 +51,10 @@ int ClicksCounter = 0;                                              // Based on 
 int ZoomFlag;                                                       // {0 - initial state; 1 - figure selection state; 2 - zoomed state}
 int ZoomIndex;                                                      // Index value of the currently selected figure. Ranges from 0 -> NrRectangles+NrEllipses+NrBezCurves
 
+// Double buffering
+static HBITMAP hbmMem;
+static HANDLE hOld;
+static HDC hdcMem;
 
 
 
@@ -138,6 +142,14 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // Main objects initialization
         case WM_CREATE:
         {
+            // Creating a compatible bitmap for double buffering
+            hdc=GetDC(hwnd);
+            hdcMem=CreateCompatibleDC(hdc);
+            hbmMem=CreateCompatibleBitmap(hdc, 420, 400);
+            hOld = SelectObject(hdcMem, hbmMem);
+            ReleaseDC(hwnd, hdc);
+
+            // Creating window elements
             hwndButton[0] = CreateWindow(
                                         "BUTTON",                                               // predefined class
                                         "Clear",                                                // button text
@@ -252,7 +264,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     NrBezCurves = 0;
                     ZoomIndex = 0;
                     ZoomFlag = 0;
-                    InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                    InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     InvalidateRect(hwnd, &WorkingAreaInfoRect, TRUE);
 
                     // Logging the "Clear Screen" event in the console
@@ -348,7 +360,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     if      (ZoomFlag == 0) {ZoomFlag = 1; ZoomIndex = 0;}
                     else if (ZoomFlag == 1) {ZoomFlag = 2;}
                     else if (ZoomFlag == 2) {ZoomFlag = 0; ZoomIndex = 0;}
-                    InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                    InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                 }
                 break;
 
@@ -362,7 +374,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             ZoomIndex = (NrRectangles + NrEllipses + NrBezCurves - 1);
                         }
                         else {ZoomIndex--;}
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                 }
                 break;
@@ -377,7 +389,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             ZoomIndex = 0;
                         }
                         else {ZoomIndex++;}
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                 }
                 break;
@@ -392,7 +404,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             int yPos = HIWORD(lParam);  // Vertical position of cursor
 
             // Checking if cursor position isn't beyond the working area bounds
-            if (xPos < 0 || xPos > 420 || yPos < 20 || yPos > 400) {break;}
+            if (xPos < 0 || xPos > 420 || yPos < 21 || yPos > 400) {break;}
 
             // Stores the coordinates of the first point for each figure
             switch(DrawFigure)
@@ -414,7 +426,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     if (ClicksCounter == 2)
                     {
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                 }
                 break;
@@ -436,7 +448,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     if (ClicksCounter == 2)
                     {
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                 }
                 break;
@@ -458,7 +470,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     if (ClicksCounter == 4)
                     {
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                 }
                 break;
@@ -480,7 +492,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (DrawFigure == 0 && ClicksCounter == 0 && ZoomFlag!=2)
             {
                 Erease(xPos, yPos);
-                InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
             }
             else
             {
@@ -503,7 +515,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Restricting the zone where left mouse button release event can occur
             if (xPos < 0) {xPos = 0;}
             if (xPos > 420) {xPos = 420;}
-            if (yPos < 20) {yPos = 20;}
+            if (yPos < 21) {yPos = 21;}
             if (yPos > 400) {yPos = 400;}
 
             // Stores the coordinates of the second point. Only for "Drag and Drop" mouse ability method
@@ -516,7 +528,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         RectCoord[NrRectangles][ClicksCounter].x = xPos;
                         RectCoord[NrRectangles][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                     break;
 
@@ -525,7 +537,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         EllipseCoord[NrEllipses][ClicksCounter].x = xPos;
                         EllipseCoord[NrEllipses][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                     break;
 
@@ -534,7 +546,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         BezCurveCoord[NrBezCurves][ClicksCounter].x = xPos;
                         BezCurveCoord[NrBezCurves][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
                     }
                     break;
                 }
@@ -553,7 +565,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         BezCurveCoord[NrBezCurves][ClicksCounter].x = xPos;
                         BezCurveCoord[NrBezCurves][ClicksCounter].y = yPos;
                         ClicksCounter++;
-                        InvalidateRect(hwnd, &WorkingAreaRect, TRUE);
+                        InvalidateRect(hwnd, &WorkingAreaRect, FALSE);
 
                         // Logging the mouse left button release event for the "Drag and Drop" method in the console
                         printf("Clicks counter: %d \n", ClicksCounter);
@@ -598,10 +610,11 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             HBRUSH HatchBrush;
 
             // Creating the working area
+            FillRect(hdcMem, &WorkingAreaRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
             qColor = RGB(0, 0, 0);
             hPen = CreatePen(PS_SOLID, 2, qColor);
-            hPenOld = (HPEN)SelectObject(hdc, hPen);
-            Rectangle(hdc, 0, 20, 420, 400);
+            hPenOld = (HPEN)SelectObject(hdcMem, hPen);
+            Rectangle(hdcMem, 0, 21, 420, 400);
 
             // Entitling the working area
             DrawText(hdc, "Working area:" , lstrlen("Working area:"), &WorkingAreaTitleRect, DT_CENTER);
@@ -628,7 +641,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                             if (ClicksCounter == 1)
                             {
-                                Rectangle(hdc, RectCoord[NrRectangles][0].x, RectCoord[NrRectangles][0].y, CurrentPos.x, CurrentPos.y);
+                                Rectangle(hdcMem, RectCoord[NrRectangles][0].x, RectCoord[NrRectangles][0].y, CurrentPos.x, CurrentPos.y);
                             }
                             else if (ClicksCounter == 2)
                             {
@@ -650,7 +663,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                             if (ClicksCounter == 1)
                             {
-                                Arc(hdc, EllipseCoord[NrEllipses][0].x, EllipseCoord[NrEllipses][0].y, CurrentPos.x, CurrentPos.y, 0, 0, 0, 0);
+                                Arc(hdcMem, EllipseCoord[NrEllipses][0].x, EllipseCoord[NrEllipses][0].y, CurrentPos.x, CurrentPos.y, 0, 0, 0, 0);
                             }
                             else if (ClicksCounter == 2)
                             {
@@ -685,7 +698,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[2].x = (BezCurveCoord[NrBezCurves][0].x + CurrentPos.x)/2;
                                     LocBezCurve[2].y = (BezCurveCoord[NrBezCurves][0].y + CurrentPos.y)/2;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -701,7 +714,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[2].x = (BezCurveCoord[NrBezCurves][0].x + CurrentPos.x)/2;
                                     LocBezCurve[2].y = (BezCurveCoord[NrBezCurves][0].y + CurrentPos.y)/2;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -716,7 +729,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[2].x = CurrentPos.x;
                                     LocBezCurve[2].y = CurrentPos.y;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -743,7 +756,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     ClicksCounter = 0;
                                     DrawFigure = 0;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
 
                                     // Redrawing the 'WorkingAreaInfoRect' rectangle
                                     RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
@@ -777,7 +790,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                             if (ClicksCounter == 1)
                             {
-                                Rectangle(hdc, RectCoord[NrRectangles][0].x, RectCoord[NrRectangles][0].y, CurrentPos.x, CurrentPos.y);
+                                Rectangle(hdcMem, RectCoord[NrRectangles][0].x, RectCoord[NrRectangles][0].y, CurrentPos.x, CurrentPos.y);
                             }
                             else if (ClicksCounter == 2)
                             {
@@ -799,7 +812,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                             if (ClicksCounter == 1)
                             {
-                                Arc(hdc, EllipseCoord[NrEllipses][0].x, EllipseCoord[NrEllipses][0].y, CurrentPos.x, CurrentPos.y, 0, 0, 0, 0);
+                                Arc(hdcMem, EllipseCoord[NrEllipses][0].x, EllipseCoord[NrEllipses][0].y, CurrentPos.x, CurrentPos.y, 0, 0, 0, 0);
                             }
                             else if (ClicksCounter == 2)
                             {
@@ -834,7 +847,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[2].x = (BezCurveCoord[NrBezCurves][0].x + CurrentPos.x)/2;
                                     LocBezCurve[2].y = (BezCurveCoord[NrBezCurves][0].y + CurrentPos.y)/2;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -850,7 +863,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[2].x = (BezCurveCoord[NrBezCurves][0].x + CurrentPos.x)/2;
                                     LocBezCurve[2].y = (BezCurveCoord[NrBezCurves][0].y + CurrentPos.y)/2;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -865,7 +878,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     LocBezCurve[2].x = CurrentPos.x;
                                     LocBezCurve[2].y = CurrentPos.y;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
                                 }
                                 break;
 
@@ -892,7 +905,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                     ClicksCounter = 0;
                                     DrawFigure = 0;
 
-                                    PolyBezier(hdc, LocBezCurve, 4);
+                                    PolyBezier(hdcMem, LocBezCurve, 4);
 
                                     // Redrawing the 'WorkingAreaInfoRect' rectangle
                                     RedrawWindow(hwnd, NULL, NULL, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
@@ -913,21 +926,21 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 // Highlight the figure focused for zooming
                 qColor = RGB(0, 255, 0);
                 hPen = CreatePen(PS_SOLID, 7, qColor);
-                hPenOld = (HPEN)SelectObject(hdc, hPen);
+                hPenOld = (HPEN)SelectObject(hdcMem, hPen);
                 if (ZoomIndex < NrRectangles)
                 {
-                    Rectangle(hdc, RectCoord[ZoomIndex][0].x, RectCoord[ZoomIndex][0].y, RectCoord[ZoomIndex][1].x, RectCoord[ZoomIndex][1].y);
+                    Rectangle(hdcMem, RectCoord[ZoomIndex][0].x, RectCoord[ZoomIndex][0].y, RectCoord[ZoomIndex][1].x, RectCoord[ZoomIndex][1].y);
                 }
                 else if ((ZoomIndex >= NrRectangles) && (ZoomIndex < NrRectangles+NrEllipses))
                 {
-                    Arc(hdc, EllipseCoord[ZoomIndex-NrRectangles][0].x, EllipseCoord[ZoomIndex-NrRectangles][0].y,
+                    Arc(hdcMem, EllipseCoord[ZoomIndex-NrRectangles][0].x, EllipseCoord[ZoomIndex-NrRectangles][0].y,
                         EllipseCoord[ZoomIndex-NrRectangles][1].x, EllipseCoord[ZoomIndex-NrRectangles][1].y, 0, 0, 0, 0);
                 }
                 else if ((ZoomIndex >= NrRectangles+NrEllipses) && (ZoomIndex < NrRectangles+NrEllipses+NrBezCurves))
                 {
-                    PolyBezier(hdc, BezCurveCoord[ZoomIndex-NrRectangles-NrEllipses], 4);
+                    PolyBezier(hdcMem, BezCurveCoord[ZoomIndex-NrRectangles-NrEllipses], 4);
                 }
-                SelectObject (hdc, hPenOld);
+                SelectObject (hdcMem, hPenOld);
                 DeleteObject(hPen);
             }
             if (ZoomFlag == 2)
@@ -958,7 +971,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                                     -min(RectCoord[ZoomIndex][0].y, RectCoord[ZoomIndex][1].y))/2.0);
 
                     // Drawing the object with some indent
-                    Rectangle(hdc, corrections[0][0]+20, corrections[0][1]+40, 420-20-corrections[0][0], 380-corrections[0][1]);
+                    Rectangle(hdcMem, corrections[0][0]+20, corrections[0][1]+40, 420-20-corrections[0][0], 380-corrections[0][1]);
                 }
 
                 // Ellipses
@@ -980,7 +993,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                                     -min(EllipseCoord[ZoomIndex-NrRectangles][0].y, EllipseCoord[ZoomIndex-NrRectangles][1].y))/2.0);
 
                     // Drawing the object with some indent
-                    Arc(hdc, corrections[0][0]+20, corrections[0][1]+40, 420-20-corrections[0][0], 380-corrections[0][1], 0, 0, 0, 0);
+                    Arc(hdcMem, corrections[0][0]+20, corrections[0][1]+40, 420-20-corrections[0][0], 380-corrections[0][1], 0, 0, 0, 0);
                 }
 
                 // Bezier curves
@@ -1026,7 +1039,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
 
                     // Drawing the object
-                    PolyBezier(hdc, LocBezCurve, 4);
+                    PolyBezier(hdcMem, LocBezCurve, 4);
 
                     // Removing the locally created variables
                     delete [] midpoint;
@@ -1050,15 +1063,15 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 // With this block of code, the recorded figures will be redrawn each time window refresh occurs
                 for (*i=0; (*i)<NrRectangles; (*i)++)
                 {
-                   Rectangle(hdc, RectCoord[*i][0].x, RectCoord[*i][0].y, RectCoord[*i][1].x, RectCoord[*i][1].y);
+                   Rectangle(hdcMem, RectCoord[*i][0].x, RectCoord[*i][0].y, RectCoord[*i][1].x, RectCoord[*i][1].y);
                 }
                 for (*i=0; (*i)<NrEllipses; (*i)++)
                 {
-                   Arc(hdc, EllipseCoord[*i][0].x, EllipseCoord[*i][0].y, EllipseCoord[*i][1].x, EllipseCoord[*i][1].y, 0, 0, 0, 0);
+                   Arc(hdcMem, EllipseCoord[*i][0].x, EllipseCoord[*i][0].y, EllipseCoord[*i][1].x, EllipseCoord[*i][1].y, 0, 0, 0, 0);
                 }
                 for (*i=0; (*i)<NrBezCurves; (*i)++)
                 {
-                   PolyBezier(hdc, BezCurveCoord[*i], 4);
+                   PolyBezier(hdcMem, BezCurveCoord[*i], 4);
                 }
 
                 // Reseting the figures counter & nulling the coordinates buffers to avoid overflow, which will in turn clean the window
@@ -1101,40 +1114,40 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     // Drawing a red line
                     qColor = RGB(255, 0, 0);
                     hPen = CreatePen(PS_SOLID, 7, qColor);
-                    hPenOld = (HPEN)SelectObject(hdc, hPen);
-                    MoveToEx(hdc, 50, 50, NULL);
-                    LineTo(hdc, 100, 50);
+                    hPenOld = (HPEN)SelectObject(hdcMem, hPen);
+                    MoveToEx(hdcMem, 50, 50, NULL);
+                    LineTo(hdcMem, 100, 50);
                     DeleteObject(hPen);
 
                     // Drawing a blue line
                     qColor = RGB(0, 0, 255);
                     hPen = CreatePen(PS_SOLID, 5, qColor);
-                    SelectObject(hdc, hPen);
-                    MoveToEx(hdc, 50, 70, NULL);
-                    LineTo(hdc, 100, 70);
-                    SelectObject(hdc, hPenOld);
+                    SelectObject(hdcMem, hPen);
+                    MoveToEx(hdcMem, 50, 70, NULL);
+                    LineTo(hdcMem, 100, 70);
+                    SelectObject(hdcMem, hPenOld);
                     DeleteObject(hPen);
 
                     // Drawing a green circle
                     qColor = RGB(0, 255, 0);
                     hPen = CreatePen(PS_SOLID, 3, qColor);
-                    hPenOld = (HPEN)SelectObject(hdc, hPen);
-                    Arc(hdc, 100, 100, 150, 150, 0, 0, 0, 0);
-                    SelectObject (hdc, hPenOld);
+                    hPenOld = (HPEN)SelectObject(hdcMem, hPen);
+                    Arc(hdcMem, 100, 100, 150, 150, 0, 0, 0, 0);
+                    SelectObject (hdcMem, hPenOld);
                     DeleteObject(hPen);
 
                     // Drawing a filled, violet rectangle
                     qColor = RGB(170, 110, 200);
                     hPen = CreatePen(PS_SOLID, 6, qColor);
-                    hPenOld = (HPEN)SelectObject(hdc, hPen);
-                    Rectangle(hdc, 130, 50, 200, 80);
+                    hPenOld = (HPEN)SelectObject(hdcMem, hPen);
+                    Rectangle(hdcMem, 130, 50, 200, 80);
                     GeneralPurposeRect.left = 130;
                     GeneralPurposeRect.top = 50;
                     GeneralPurposeRect.right = 200;
                     GeneralPurposeRect.bottom = 80;
                     HatchBrush = CreateHatchBrush(HS_HORIZONTAL, qColor);
-                    FillRect(hdc, &GeneralPurposeRect, HatchBrush);
-                    SelectObject (hdc, hPenOld);
+                    FillRect(hdcMem, &GeneralPurposeRect, HatchBrush);
+                    SelectObject (hdcMem, hPenOld);
                     DeleteObject(hPen);
                     DeleteObject(HatchBrush);
 
@@ -1143,7 +1156,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     float* Step = new float;
                     int *i = new int;
                     HBRUSH Brush;
-                    Rectangle(hdc, 180, 110, 250, 140);
+                    Rectangle(hdcMem, 180, 110, 250, 140);
                     *Step = 30.0f / 256.0f;
                     for (*i = 0; (*i) < 256; (*i)++)
                     {
@@ -1155,7 +1168,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         // Setting the brush color
                         Brush = CreateSolidBrush(RGB(0, 0, (255 - (*i))));
                         // Filling the rectangle
-                        FillRect(hdc, FRect, Brush);
+                        FillRect(hdcMem, FRect, Brush);
                         // Reseting the brush color
                         DeleteObject(Brush);
                     }
@@ -1174,11 +1187,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     BezCurveBI[2].y = 300;
                     BezCurveBI[3].x = 350;
                     BezCurveBI[3].y = 200;
-                    PolyBezier(hdc, BezCurveBI, 4);
+                    PolyBezier(hdcMem, BezCurveBI, 4);
                 }
             }
 
-            EndPaint (hwnd, &ps);
+            // Showing the bitmap on the screen, ending paint
+            BitBlt(hdc, 0, 20, 420, 400, hdcMem, 0, 20, SRCCOPY);
+            EndPaint(hwnd, &ps);
         }
         return DefWindowProc(hwnd, msg, wParam, lParam);
 
